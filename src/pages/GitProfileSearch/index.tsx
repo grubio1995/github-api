@@ -2,13 +2,14 @@ import ResultCard from 'components/ResultCard';
 import { useState } from 'react';
 import './styles.css';
 import axios from 'axios';
+import GitProfileLoader from './GitProfileLoader';
 
 type FormData = {
   user: string;
 };
 
 type GitUser = {
-  login: string;
+  url: string;
   followers: string;
   location: string;
   name: string;
@@ -22,6 +23,8 @@ const GitProfileSearch = () => {
     user: '',
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const name = event.target.name;
     const value = event.target.value;
@@ -31,6 +34,7 @@ const GitProfileSearch = () => {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsLoading(true);
     axios
       .get(`https://api.github.com/users/${formData.user}`)
       .then((response) => {
@@ -38,7 +42,8 @@ const GitProfileSearch = () => {
       })
       .catch((error) => {
         setgituser(undefined);
-      });
+      })
+      .finally(() => setIsLoading(false));
   };
 
   return (
@@ -63,19 +68,24 @@ const GitProfileSearch = () => {
           </form>
         </div>
       </div>
-      {gituser && (
-        <div className="git-profile-result-container">
-          <div className="img-container">
-            <img src={gituser.avatar_url} />
+
+      {isLoading ? (
+        <GitProfileLoader />
+      ) : (
+        gituser && (
+          <div className="git-profile-result-container">
+            <div className="img-container">
+              <img src={gituser.avatar_url} alt="avatar" />
+            </div>
+            <div className="info-container">
+              <h2>Informações</h2>
+              <ResultCard title="Perfil:" description={gituser.url} />
+              <ResultCard title="Seguidores:" description={gituser.followers} />
+              <ResultCard title="Localidade:" description={gituser.location} />
+              <ResultCard title="Nome:" description={gituser.name} />
+            </div>
           </div>
-          <div className="info-container">
-            <h2>Informações</h2>
-            <ResultCard title="Perfil:" description={gituser.login} />
-            <ResultCard title="Seguidores:" description={gituser.followers} />
-            <ResultCard title="Localidade:" description={gituser.location} />
-            <ResultCard title="Nome:" description={gituser.name} />
-          </div>
-        </div>
+        )
       )}
     </>
   );
